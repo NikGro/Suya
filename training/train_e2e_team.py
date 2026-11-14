@@ -246,21 +246,22 @@ def team(names, label):
     return teachers, student
 
 print("eigene Naechte und Spenden:", {k: len(v[2]) for k, v in homes.items()}, flush=True)
-# 1) Probe ohne Testnaechte
-old = os.path.join(out, "model_e2e_final.pt")
-base = None
-if os.path.exists(old):
-    net = Net().to(dev); net.load_state_dict(torch.load(old, map_location=dev)); base = test_probs("altes_app_modell", probs_of(net, TEST), TEST)
-train_names = [k for k in homes if k not in TEST]
-print("Probe: Training mit", train_names, "Test:", TEST, flush=True)
-teachers, student = team(train_names, "Probe")
-per = [probs_of(t, TEST) for t in teachers]
-for i, p in enumerate(per): test_probs("probe_lehrer%d" % i, p, TEST)
-test_probs("probe_gemeinsam", {k: np.mean([p[k] for p in per], 0) for k in TEST}, TEST)
-st = test_probs("probe_schueler", probs_of(student, TEST), TEST)
-if base:
-    better = all(st[k] >= base[k] for k in TEST)
-    print("ERGEBNIS Probe: Schueler", st, "altes Modell", base, "-> mindestens gleich gut in allen Testnaechten:", better, flush=True)
+# 1) Probe ohne Testnaechte (PROBE=0: auslassen, wenn das Rezept schon geprueft ist und nur neue Naechte dazukommen)
+if os.environ.get("PROBE", "1") == "1":
+    old = os.path.join(out, "model_e2e_final.pt")
+    base = None
+    if os.path.exists(old):
+        net = Net().to(dev); net.load_state_dict(torch.load(old, map_location=dev)); base = test_probs("altes_app_modell", probs_of(net, TEST), TEST)
+    train_names = [k for k in homes if k not in TEST]
+    print("Probe: Training mit", train_names, "Test:", TEST, flush=True)
+    teachers, student = team(train_names, "Probe")
+    per = [probs_of(t, TEST) for t in teachers]
+    for i, p in enumerate(per): test_probs("probe_lehrer%d" % i, p, TEST)
+    test_probs("probe_gemeinsam", {k: np.mean([p[k] for p in per], 0) for k in TEST}, TEST)
+    st = test_probs("probe_schueler", probs_of(student, TEST), TEST)
+    if base:
+        better = all(st[k] >= base[k] for k in TEST)
+        print("ERGEBNIS Probe: Schueler", st, "altes Modell", base, "-> mindestens gleich gut in allen Testnaechten:", better, flush=True)
 # 2) Endmodell mit allen Naechten (nur speichern)
 if os.environ.get("FINAL", "1") == "1":
     teachers, student = team(list(homes), "Endmodell")

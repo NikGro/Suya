@@ -10,7 +10,7 @@ import SonarDSP
 /// (SuyaNightSequence) → Wach/REM/Kern/Tief. Das Ergebnis wird je Nacht in model.json gespeichert.
 enum NightModel {
     /// erhöhen, wenn ein neues Modell eingebaut wird → Nächte werden neu berechnet
-    static let version = 2   // 2: Zeiten mit eigenen Schlafklängen ausgeblendet
+    static let version = 3   // 2: Zeiten mit eigenen Schlafklängen ausgeblendet; 3: Modell „Team fair 2“ (14.11.2026)
 
     private struct Cache: Codable { var version: Int; var stages: String }
 

@@ -22,6 +22,17 @@ def now_iso():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def today():
+    """nur der Tag – für alles, was zu einer Nacht gespeichert wird (keine Uhrzeit des Hochladens)"""
+    return time.strftime("%Y-%m-%d", time.gmtime())
+
+
+def day_start(t=None):
+    """Mitternacht (UTC) des Tages von t – Zeitstempel gespendeter Dateien"""
+    g = time.gmtime(t or time.time())
+    return int(time.time() if t is None else t) - (g.tm_hour * 3600 + g.tm_min * 60 + g.tm_sec)
+
+
 def donor_dir(donor):
     return os.path.join(config.DATA, "spender", donor)
 
@@ -80,7 +91,7 @@ def log_event(kind, donor):
     except OSError:
         pass
     with open(path, "a") as f:
-        f.write(json.dumps({"t": now_iso(), "ereignis": kind, "spender": donor}) + "\n")
+        f.write(json.dumps({"t": today(), "ereignis": kind, "spender": donor}) + "\n")
 
 
 def free_bytes():

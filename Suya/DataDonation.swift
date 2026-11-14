@@ -38,8 +38,13 @@ final class DataDonation: ObservableObject {
 
     /// geheimer Schlüssel dieser Installation: nur wer ihn hat, kann für die Spender-Nummer hochladen oder löschen
     /// liegt im Schlüsselbund (früher in UserDefaults – wird beim ersten Zugriff umgezogen)
-    var secretKey: String {
-        if let k = Keychain.get("donation.key") { return k }
+    /// nil, solange der Schlüsselbund nicht lesbar ist (vor dem ersten Entsperren) – dann nichts senden
+    var secretKey: String? {
+        switch Keychain.read("donation.key") {
+        case .found(let k): return k
+        case .unavailable: return nil
+        case .missing: break
+        }
         let k = d.string(forKey: "donation.key") ?? (UUID().uuidString + "-" + UUID().uuidString.prefix(8))
         if Keychain.set("donation.key", k) { d.removeObject(forKey: "donation.key") } else { d.set(k, forKey: "donation.key") }
         return k
@@ -50,7 +55,11 @@ final class DataDonation: ObservableObject {
     /// einem Backup auf ein neues iPhone (Schlüssel fehlt), wäre sie dort ausgesperrt → neue Nummer, die alte
     /// bleibt zum Nachlesen (Löschung dann über das Impressum).
     private static func loadDonorID(_ d: UserDefaults) -> String? {
-        if let id = Keychain.get("donation.id") { return id }
+        switch Keychain.read("donation.id") {
+        case .found(let id): return id
+        case .unavailable: return nil   // später erneut (reloadDonorID), keine neue Nummer
+        case .missing: break
+        }
         guard let old = d.string(forKey: "donation.id") else { return nil }
         d.removeObject(forKey: "donation.id")
         if Keychain.get("donation.key") != nil || d.string(forKey: "donation.key") != nil {
@@ -74,8 +83,17 @@ final class DataDonation: ObservableObject {
         ensureDonorID()
     }
 
+    /// Schlüsselbund war beim Start nicht lesbar: jetzt noch einmal versuchen
+    func reloadDonorID() {
+        guard donorID == nil else { return }
+        donorID = Self.loadDonorID(d)
+        if state == .granted { ensureDonorID() }
+    }
+
     private func ensureDonorID() {
         guard donorID == nil else { return }
+        // Schlüsselbund gesperrt: nicht eine neue Nummer anlegen, die die alte überschreiben würde
+        if case .unavailable = Keychain.read("donation.id") { return }
         let id = String(UUID().uuidString.prefix(8))
         _ = Keychain.set("donation.id", id)
         donorID = id

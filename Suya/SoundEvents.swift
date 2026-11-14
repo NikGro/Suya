@@ -241,6 +241,11 @@ final class LiveSoundAnalyzer: @unchecked Sendable {
         queue.async { self.analyzer.analyze(buffer, atAudioFramePosition: pos) }
     }
 
+    /// Aufgefüllte Lücke: Zeitachse vorrücken, damit Geräusche danach an der richtigen Stelle liegen
+    func skip(frames: AVAudioFramePosition) {
+        position += frames
+    }
+
     func finish(folder: URL) {
         queue.sync { analyzer.completeAnalysis() }
         try? SoundEventDetector.save(SoundEventDetector.merge(collector.windows), in: folder)

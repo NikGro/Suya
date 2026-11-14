@@ -45,6 +45,8 @@ final class PassiveRecorder: @unchecked Sendable {
     /// Nur für die Anzeige: Hochton-Pegel alle 0,1 s (Atemlinie), fließt nicht in die Auswertung
     /// `index`: laufende Nummer des 0,1-s-Werts (Audiozeit = index × 0,1 s), für ruckelfreie Anzeige
     var onTick: (@Sendable (_ highDB: Double, _ index: Int) -> Void)?
+    /// so viele Sekunden mit Stille aufgefüllt (Wecker und Klänge zählen sie als „keine Messung“)
+    var onGap: (@Sendable (_ seconds: Int) -> Void)?
     private var tickHigh = 0.0
     private var tickCount = 0
     private var tickIndex = 0
@@ -130,7 +132,8 @@ final class PassiveRecorder: @unchecked Sendable {
         let position = Double(samplesWritten) / Self.sampleRate
         let lag = now.timeIntervalSince(start) - position - Double(buf.frameLength) / Self.sampleRate
         guard lag > 5 else { return }   // normales Ruckeln und Uhrendrift bleiben unberührt
-        let fill = min(lag, Self.maxGapFill)
+        // ganze Sekunden, damit levels.csv (eine Zeile je Sekunde) weiter zum Ton passt
+        let fill = min(lag.rounded(), Self.maxGapFill)
         let chunk = AVAudioFrameCount(Self.sampleRate)
         guard let zero = AVAudioPCMBuffer(pcmFormat: outFormat, frameCapacity: chunk) else { return }
         var left = Int64(fill * Self.sampleRate)
@@ -142,8 +145,20 @@ final class PassiveRecorder: @unchecked Sendable {
             left -= Int64(zero.frameLength)
         }
         gapSeconds += fill
+        live?.skip(frames: AVAudioFramePosition(fill * Self.sampleRate))
+        tickIndex += Int(fill * 10)
+        // je aufgefüllte Sekunde eine Zeile in levels.csv (Stille, −120 dB), Zeit wie auf der Ton-Achse
+        var rows = ""
+        for k in 0..<Int(fill) {
+            rows += String(format: "%@,-120.0,-140.0,-120.0,-120.0,-120.0\n",
+                           Night.timestamp(start.addingTimeInterval(position + Double(k))))
+        }
         let line = String(format: "%.1f,%.1f\n", position, position + fill)
-        io.async { try? self.gaps?.write(contentsOf: Data(line.utf8)) }
+        io.async {
+            try? self.levels?.write(contentsOf: Data(rows.utf8))
+            try? self.gaps?.write(contentsOf: Data(line.utf8))
+        }
+        onGap?(Int(fill))
         eventLocked(String(format: "Aussetzer %.0f s mit Stille aufgefüllt", fill)
                     + (lag > fill ? String(format: " (weitere %.0f s fehlen)", lag - fill) : ""))
         if lag > fill { audioStart = now.addingTimeInterval(-position - fill - Double(buf.frameLength) / Self.sampleRate) }

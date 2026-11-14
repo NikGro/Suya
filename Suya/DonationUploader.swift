@@ -67,8 +67,9 @@ final class DonationUploader: ObservableObject {
 
     private func runOnce() async {
         let donation = DataDonation.shared
-        guard let id = donation.donorID else { return }
-        let donor = SuyaAPI.Donor(id: id, key: donation.secretKey)
+        donation.reloadDonorID()
+        guard let id = donation.donorID, let key = donation.secretKey else { return }   // Schlüsselbund noch gesperrt
+        let donor = SuyaAPI.Donor(id: id, key: key)
 
         // 1) offene Löschanfrage zuerst
         if donation.deletionRequested != nil, !donation.deletionSent {
@@ -126,7 +127,8 @@ final class DonationUploader: ObservableObject {
         state.sent = nil; state.skipped = nil; state.waiting = nil; state.manual = true
         state.save(folder)
         let donation = DataDonation.shared
-        guard donation.state == .granted, let donor = donation.donorID else { return }
+        donation.reloadDonorID()
+        guard donation.state == .granted, let donor = donation.donorID, let key = donation.secretKey else { return }
         // läuft gerade die automatische Spende, danach dran sein (höchstens 15 min warten)
         for _ in 0..<1800 where running { try? await Task.sleep(for: .milliseconds(500)) }
         guard !running else { return }
@@ -138,7 +140,7 @@ final class DonationUploader: ObservableObject {
         if !Self.hasMel(folder), let why = await prepare(folder: folder) {
             state.skipped = why; state.save(folder); return
         }
-        switch await upload(folder: folder, state: &state, donor: SuyaAPI.Donor(id: donor, key: donation.secretKey)) {
+        switch await upload(folder: folder, state: &state, donor: SuyaAPI.Donor(id: donor, key: key)) {
         case .sent: state.sent = Date(); state.waiting = nil; if !wasSent { donation.countUpload() }
         case .skip(let why): state.skipped = why; state.waiting = nil
         case .later(let why): state.waiting = why

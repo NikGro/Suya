@@ -196,7 +196,7 @@ class Handler(BaseHTTPRequestHandler):
         have = sum(os.path.getsize(os.path.join(parts, f)) for f in os.listdir(parts)) if os.path.isdir(parts) else 0
         if have + n > config.MAX_BYTES:
             raise Refusal(413, "too_large", "Paket zu groß")
-        refusal = limits.bytes_refusal(donor, n)
+        refusal = limits.bytes_refusal(donor, n, limits.client_key(self))
         if refusal:
             raise Refusal(*refusal)
         return known
@@ -231,7 +231,10 @@ class Handler(BaseHTTPRequestHandler):
         if digest.hexdigest() != full:
             os.remove(out)
             raise Refusal(400, "hash_mismatch", "Paket passt nicht zum Hash")
-        os.replace(out, storage.night_file(donor, night))
+        path = storage.night_file(donor, night)
+        os.replace(out, path)
+        midnight = storage.day_start()
+        os.utime(path, (midnight, midnight))   # nur der Tag, nicht die Uhrzeit des Hochladens
 
     def upload_part(self, donor, key):
         night, index, total, full = self._part_headers()
@@ -251,7 +254,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise Refusal(403, "key_mismatch", "Schlüssel passt nicht")
             if known is None and now_known is None:
                 storage.store_key(donor, key)
-            limits.add_bytes(donor, n)
+            limits.add_bytes(donor, n, limits.client_key(self))
         parts = storage.parts_dir(donor, night)
         os.makedirs(parts, exist_ok=True)
         if not self._receive(os.path.join(parts, str(index)), n):

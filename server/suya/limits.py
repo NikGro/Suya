@@ -9,6 +9,7 @@ ip_hits = {}                     # Adresse → Zeitpunkte der Anfragen der letzt
 bug_hits = {}
 day = {"date": "", "bytes": 0}   # angenommene Bytes heute, insgesamt
 donor_bytes = {}                 # Spender → angenommene Bytes heute
+ip_bytes = {}                    # Adresse → [(Zeitpunkt, Bytes)] der letzten Stunde (nie länger gehalten)
 bug_day = {"date": "", "count": 0}
 
 
@@ -18,6 +19,7 @@ def reset():
         ip_hits.clear()
         bug_hits.clear()
         donor_bytes.clear()
+        ip_bytes.clear()
         day.update(date="", bytes=0)
         bug_day.update(date="", count=0)
 
@@ -69,9 +71,24 @@ def _roll_day():
         donor_bytes.clear()
 
 
-def bytes_refusal(donor, n):
-    """Fehlertext, wenn n weitere Bytes heute zu viel wären (lock muss gehalten werden), sonst None."""
+def _ip_hour_bytes(ip, now):
+    recent = [(t, b) for t, b in ip_bytes.get(ip, []) if now - t < 3600]
+    if recent:
+        ip_bytes[ip] = recent
+    else:
+        ip_bytes.pop(ip, None)
+    if len(ip_bytes) > 10000:
+        for k in [k for k, v in ip_bytes.items() if now - v[-1][0] >= 3600]:
+            del ip_bytes[k]
+    return sum(b for _, b in recent)
+
+
+def bytes_refusal(donor, n, ip=None):
+    """Fehlertext, wenn n weitere Bytes heute zu viel wären (lock muss gehalten werden), sonst None.
+    Ohne App Attest kann sich jeder beliebig viele Spender-Nummern ausdenken; deshalb zusätzlich je Adresse."""
     _roll_day()
+    if ip is not None and _ip_hour_bytes(ip, time.time()) + n > config.IP_HOUR_BYTES:
+        return 429, "address_limit", "zu viel von dieser Adresse, bitte später"
     if day["bytes"] + n > config.DAY_BYTES:
         return 503, "day_limit", "Tageslimit erreicht"
     if donor_bytes.get(donor, 0) + n > config.DONOR_DAY_BYTES:
@@ -79,8 +96,10 @@ def bytes_refusal(donor, n):
     return None
 
 
-def add_bytes(donor, n):
+def add_bytes(donor, n, ip=None):
     """lock muss gehalten werden"""
     _roll_day()
+    if ip is not None:
+        ip_bytes.setdefault(ip, []).append((time.time(), n))
     day["bytes"] += n
     donor_bytes[donor] = donor_bytes.get(donor, 0) + n

@@ -24,8 +24,11 @@ enum NightAudioTrim {
         if NightModel.isAvailable, NightModel.cached(folder) == nil {
             _ = try? await NightModel.stages(folder: folder)
         }
-        // ohne Ergebnis den Ton nicht löschen – sonst bliebe von der Nacht nichts übrig
-        guard NightModel.cached(folder) != nil else { throw TrimError.modelFailed }
+        // ohne Ergebnis den Ton nicht löschen – sonst bliebe von der Nacht nichts übrig. Hat das Modell aber
+        // endgültig aufgegeben (3 Versuche), gilt die Zusage „Ton nach 24 Stunden gelöscht“ trotzdem.
+        let gaveUp = NightModel.attempts(folder) >= NightModel.maxAttempts
+        guard NightModel.cached(folder) != nil || gaveUp else { throw TrimError.modelFailed }
+        if gaveUp, NightModel.cached(folder) == nil { Log.analysis.notice("Ton ohne Auswertung gelöscht (Modell gab auf)") }
         try await Task.detached(priority: .userInitiated) {
             let dir = folder.appendingPathComponent("clips", isDirectory: true)
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

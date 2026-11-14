@@ -391,7 +391,7 @@ DYNAMIC = ["Aus", "Schlummern", "Klänge ausblenden", "Klänge abspielen", "Klä
 INFOPLIST_EN = {
 "NSAlarmKitUsageDescription": "Suya wakes you within the window you set, as soon as you're sleeping lightly.",
 "NSMicrophoneUsageDescription": "Suya records breathing and movement sounds at night to analyze your sleep. The recordings stay on your iPhone until you share them yourself.",
-"NSHealthShareUsageDescription": "Suya reads your Apple Watch sleep stages to compare them with its own estimate.",
+"NSHealthShareUsageDescription": "Suya reads your Apple Watch sleep stages to compare them with its own estimate and, for an export you request, the night's heart rate, HRV, respiratory rate and blood oxygen.",
 "NSHealthUpdateUsageDescription": "Suya writes your sleep stages (awake, core, deep, REM) to Apple Health.",
 }
 

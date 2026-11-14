@@ -73,6 +73,9 @@ final class PassiveNightEngine: ObservableObject {
                     self.history.second(db: db, bands: bands)
                 }
             }
+            rec.onGap = { [weak self] seconds in
+                Task { @MainActor in self?.history.gap(seconds: seconds) }
+            }
             rec.onTick = { high, index in
                 let arrived = Date().timeIntervalSinceReferenceDate
                 Task { @MainActor in LiveLevels.shared.tick(high: high, index: index, arrived: arrived) }
@@ -366,6 +369,12 @@ struct NightHistory {
     }
 
     mutating func motion(_ activity: Double) { peak = max(peak, activity) }
+
+    /// aufgefüllte Lücke: Sekunden ohne Messung, damit die Zeitachse zur Uhr passt
+    mutating func gap(seconds n: Int) {
+        seconds.append(contentsOf: repeatElement(nil, count: max(0, n)))
+        motionPeaks.append(contentsOf: repeatElement(nil, count: max(0, n)))
+    }
 }
 
 /// Grenzen einer Aufnahme

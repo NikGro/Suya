@@ -12,6 +12,7 @@ KEEP_DAYS = int(os.environ.get("KEEP_DAYS", "183"))             # 6 Monate
 NIGHTS_PER_DONOR_DAY = 4
 OPEN_PER_DONOR = 2                                       # gleichzeitig unvollständige Nächte je Spender
 DONOR_DAY_BYTES = 400 * 2**20
+IP_HOUR_BYTES = 100 * 2**20                              # je Adresse und Stunde, egal wie viele Spender-Nummern
 PART_MAX = 8 * 2**20                                     # ein Teil (die App sendet 4 MB)
 PART_KEEP = 86400                                        # unvollständige Nächte nach 24 h verwerfen
 MAX_PARTS = 64

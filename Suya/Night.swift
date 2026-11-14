@@ -77,6 +77,28 @@ struct Night: Hashable, Sendable, Identifiable {
         return start
     }
 
+    /// Startzeit jeder Audiodatei (audio_index.csv), nach Dateiname
+    var audioFileStarts: [String: Date] {
+        guard let text = text(.audioIndex) else { return [:] }
+        var out: [String: Date] = [:]
+        for line in text.split(separator: "\n").dropFirst() {
+            let c = line.split(separator: ",")
+            if c.count == 2, let d = Self.date(String(c[1])) { out[String(c[0])] = d }
+        }
+        return out
+    }
+
+    /// Erwartete Länge jeder Audiodatei in Sekunden (Abstand zur nächsten), nil für die letzte oder unbekannt
+    var expectedDurations: [Double?] {
+        let files = audioFiles
+        let starts = audioFileStarts
+        return files.indices.map { i in
+            guard i + 1 < files.count, let a = starts[files[i].lastPathComponent],
+                  let b = starts[files[i + 1].lastPathComponent], b > a else { return nil }
+            return b.timeIntervalSince(a)
+        }
+    }
+
     /// Ende der Nacht: meta.json „end“, sonst die letzte Änderung einer Audiodatei
     var end: Date? {
         if let e = meta["end"] as? String, let d = Self.date(e) { return d }

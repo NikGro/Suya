@@ -134,6 +134,27 @@ class Server(unittest.TestCase):
         self.assertEqual(post(self.base + "/api/fehler", json.dumps({"text": "alt"}).encode())[0], 201)
         self.assertEqual(post(self.base + "/api/fehler", json.dumps({"text": "zu viel"}).encode())[0], 429)
 
+    def test_address_budget_across_donors(self):
+        """ausgedachte Spender-Nummern von einer Adresse teilen sich ein Budget"""
+        config.IP_HOUR_BYTES = 3000
+        try:
+            chunk = b"q" * 1000
+            full = hashlib.sha256(chunk).hexdigest()
+            codes = [self.part("FAFA%04d" % k, "nacht-addr1", 0, 1, chunk, full)[0] for k in range(5)]
+            self.assertEqual(codes[:3], [201, 201, 201])
+            self.assertEqual(codes[3:], [429, 429])
+        finally:
+            config.IP_HOUR_BYTES = 100 * 2**20
+
+    def test_only_day_stored(self):
+        a = b"D" * 100
+        self.assertEqual(self.part("DADA0001", "nacht-tag01", 0, 1, a, hashlib.sha256(a).hexdigest())[0], 201)
+        path = storage.night_file("DADA0001", "nacht-tag01")
+        self.assertEqual(int(os.path.getmtime(path)) % 86400, 0)
+        with open(os.path.join(DATA, "protokoll.jsonl")) as f:
+            last = json.loads(f.read().splitlines()[-1])
+        self.assertRegex(last["t"], r"^\d{4}-\d{2}-\d{2}$")
+
     def test_status(self):
         with urllib.request.urlopen(self.base + "/api/status") as r:
             j = json.loads(r.read())

@@ -48,7 +48,7 @@ enum NightFinisher {
             }
             // Ton erst nach 24 Stunden löschen (bis dahin: Export mit Audio)
             if let end = Night(folder).end, Date().timeIntervalSince(end) < keepAudioHours * 3600 { continue }
-            _ = try? await NightAudioTrim.trim(folder)   // Ton weg, Ausschnitte bleiben; scheitert das Modell, bleibt er
+            _ = try? await NightAudioTrim.trim(folder)   // Ton weg, Ausschnitte bleiben; scheitert das Modell, bleibt er bis zum 3. Versuch
         }
         cleanupMel()
     }

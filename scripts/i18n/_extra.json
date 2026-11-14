@@ -3,49 +3,49 @@
  "es": {
   "NSAlarmKitUsageDescription": "Suya te despierta dentro del intervalo que elijas, en cuanto duermas ligero.",
   "NSMicrophoneUsageDescription": "Suya graba por la noche los sonidos de tu respiración y movimiento para analizar tu sueño. Las grabaciones se quedan en tu iPhone hasta que tú las compartas.",
-  "NSHealthShareUsageDescription": "Suya lee las fases de sueño de tu Apple Watch para compararlas con su propia estimación.",
+  "NSHealthShareUsageDescription": "Suya lee las fases de sueño de tu Apple Watch para compararlas con su propia estimación y, para una exportación que pidas, la frecuencia cardiaca, la VFC, la frecuencia respiratoria y el oxígeno en sangre de la noche.",
   "NSHealthUpdateUsageDescription": "Suya escribe tus fases de sueño (despierto, esencial, profundo, REM) en Apple Salud."
  },
  "fr": {
   "NSAlarmKitUsageDescription": "Suya te réveille dans la plage choisie, dès que tu dors légèrement.",
   "NSMicrophoneUsageDescription": "Suya enregistre la nuit les bruits de respiration et de mouvement pour analyser ton sommeil. Les enregistrements restent sur ton iPhone jusqu’à ce que tu les partages toi-même.",
-  "NSHealthShareUsageDescription": "Suya lit les phases de sommeil de ton Apple Watch pour les comparer à sa propre estimation.",
+  "NSHealthShareUsageDescription": "Suya lit les phases de sommeil de ton Apple Watch pour les comparer à sa propre estimation et, pour un export que tu demandes, la fréquence cardiaque, la VFC, la fréquence respiratoire et l’oxygène sanguin de la nuit.",
   "NSHealthUpdateUsageDescription": "Suya inscrit tes phases de sommeil (éveillé, essentiel, profond, paradoxal) dans Apple Santé."
  },
  "it": {
   "NSAlarmKitUsageDescription": "Suya ti sveglia nell’intervallo impostato, appena dormi leggero.",
   "NSMicrophoneUsageDescription": "Suya registra di notte i suoni del respiro e dei movimenti per analizzare il tuo sonno. Le registrazioni restano sul tuo iPhone finché non le condividi tu.",
-  "NSHealthShareUsageDescription": "Suya legge le fasi del sonno del tuo Apple Watch per confrontarle con la propria stima.",
+  "NSHealthShareUsageDescription": "Suya legge le fasi del sonno del tuo Apple Watch per confrontarle con la propria stima e, per un’esportazione che richiedi, frequenza cardiaca, HRV, frequenza respiratoria e ossigeno nel sangue della notte.",
   "NSHealthUpdateUsageDescription": "Suya scrive le tue fasi del sonno (sveglio, principale, profondo, REM) in Apple Salute."
  },
  "pt-BR": {
   "NSAlarmKitUsageDescription": "O Suya acorda você no intervalo definido, assim que estiver em sono leve.",
   "NSMicrophoneUsageDescription": "À noite, o Suya grava sons de respiração e movimento para analisar seu sono. As gravações ficam no seu iPhone até você mesmo compartilhá-las.",
-  "NSHealthShareUsageDescription": "O Suya lê as fases do sono do seu Apple Watch para compará-las com a própria estimativa.",
+  "NSHealthShareUsageDescription": "O Suya lê as fases do sono do seu Apple Watch para compará-las com a própria estimativa e, para uma exportação que você pedir, a frequência cardíaca, VFC, frequência respiratória e oxigênio no sangue da noite.",
   "NSHealthUpdateUsageDescription": "O Suya registra suas fases do sono (acordado, essencial, profundo, REM) no Apple Saúde."
  },
  "nl": {
   "NSAlarmKitUsageDescription": "Suya wekt je binnen het ingestelde tijdvenster, zodra je licht slaapt.",
   "NSMicrophoneUsageDescription": "Suya neemt ’s nachts adem- en bewegingsgeluiden op om je slaap te analyseren. De opnamen blijven op je iPhone tot je ze zelf deelt.",
-  "NSHealthShareUsageDescription": "Suya leest de slaapfasen van je Apple Watch om ze met de eigen schatting te vergelijken.",
+  "NSHealthShareUsageDescription": "Suya leest de slaapfasen van je Apple Watch om ze met de eigen schatting te vergelijken en, voor een export die je vraagt, de hartslag, HRV, ademhalingsfrequentie en het zuurstofgehalte van die nacht.",
   "NSHealthUpdateUsageDescription": "Suya schrijft je slaapfasen (wakker, kern, diep, REM) naar Apple Gezondheid."
  },
  "ja": {
   "NSAlarmKitUsageDescription": "Suyaは設定した時間枠の中で、浅い眠りになったらあなたを起こします。",
   "NSMicrophoneUsageDescription": "Suyaは睡眠を分析するため、夜間に呼吸や体の動きの音を録音します。録音はあなたが自分で共有するまでiPhone内に残ります。",
-  "NSHealthShareUsageDescription": "SuyaはApple Watchの睡眠段階を読み取り、自身の推定と比較します。",
+  "NSHealthShareUsageDescription": "SuyaはApple Watchの睡眠段階を読み取り、自身の推定と比較します。書き出しを依頼した場合は、その夜の心拍数、心拍変動、呼吸数、血中酸素も読み取ります。",
   "NSHealthUpdateUsageDescription": "Suyaは睡眠段階（覚醒、コア、深い、レム）をAppleヘルスケアに書き込みます。"
  },
  "ko": {
   "NSAlarmKitUsageDescription": "Suya는 설정한 시간대 안에서 얕게 잠들면 깨웁니다.",
   "NSMicrophoneUsageDescription": "Suya는 수면을 분석하기 위해 밤에 호흡과 움직임 소리를 녹음합니다. 녹음은 직접 공유하기 전까지 iPhone에 남습니다.",
-  "NSHealthShareUsageDescription": "Suya는 Apple Watch의 수면 단계를 읽어 자체 추정과 비교합니다.",
+  "NSHealthShareUsageDescription": "Suya는 Apple Watch의 수면 단계를 읽어 자체 추정과 비교하며, 내보내기를 요청하면 그 밤의 심박수, 심박 변이도, 호흡수, 혈중 산소도 읽습니다.",
   "NSHealthUpdateUsageDescription": "Suya는 수면 단계(깨어 있음, 코어, 깊은 수면, 렘)를 Apple 건강 앱에 기록합니다."
  },
  "zh-Hans": {
   "NSAlarmKitUsageDescription": "Suya 会在你设定的时间窗内、在你浅睡时叫醒你。",
   "NSMicrophoneUsageDescription": "Suya 夜间录制呼吸和动作的声音来分析你的睡眠。录音会留在你的 iPhone 上，直到你自己分享。",
-  "NSHealthShareUsageDescription": "Suya 读取 Apple Watch 的睡眠阶段，与自己的估计进行对比。",
+  "NSHealthShareUsageDescription": "Suya 读取 Apple Watch 的睡眠阶段，与自己的估计进行对比；在你要求导出时，还会读取当晚的心率、心率变异性、呼吸频率和血氧。",
   "NSHealthUpdateUsageDescription": "Suya 将你的睡眠阶段（清醒、核心、深睡、快速眼动）写入 Apple 健康。"
  }
 },

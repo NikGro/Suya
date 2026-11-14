@@ -134,14 +134,20 @@ extension NightModel {
 
     fileprivate static func computeMelFrames(files: [URL], progress: (Double) -> Void) throws -> [[Float]] {
         let sr = LogMel.sampleRate
-        let total = files.reduce(0) { $0 + Int((try? AVAudioFile(forReading: $1))?.length ?? 0) }
+        // unlesbare Datei mitten in der Nacht: ihre Zeit mit Stille füllen und ausblenden, sonst rückte alles
+        // danach (bis zu einer Stunde) nach vorn
+        let night = Night(files[0].deletingLastPathComponent())
+        let expected = files.count == night.audioFiles.count ? night.expectedDurations : Array(repeating: nil, count: files.count)
+        let lengths = files.map { (try? AVAudioFile(forReading: $0)).map { Int($0.length) } }
+        let fill = zip(lengths, expected).map { length, seconds in length == nil ? Int((seconds ?? 0) * Double(sr)) : 0 }
+        let total = zip(lengths, fill).reduce(0) { $0 + ($1.0 ?? 0) + $1.1 }
         let epochs = total / (sr * 30)
         guard epochs >= 20 else { throw Failure.noAudio }
         let usable = epochs * 30 * sr
         let mel = LogMel()
         var frames: [[Float]] = []
         frames.reserveCapacity(epochs * LogMel.framesPerEpoch)
-        var reader = AudioStream(files: files)
+        var reader = AudioStream(files: files, fill: fill)
         var done = 0
         while done < usable {
             let want = min(sr * LogMel.segmentSeconds, usable - done)
@@ -153,7 +159,20 @@ extension NightModel {
         }
         let n = min(epochs, frames.count / LogMel.framesPerEpoch)
         guard n >= 20 else { throw Failure.noAudio }
+        if !reader.filled.isEmpty { recordFilled(reader.filled, in: night) }
         return Array(frames.prefix(n * LogMel.framesPerEpoch))
+    }
+
+    /// Mit Stille gefüllte Stellen (Proben) in gaps.csv vermerken, damit Auswertung und Spende sie ausblenden
+    private static func recordFilled(_ ranges: [Range<Int>], in night: Night) {
+        let sr = Double(LogMel.sampleRate)
+        var text = night.text(.gaps) ?? "from_s,to_s\n"
+        for r in ranges {
+            let line = String(format: "%.1f,%.1f", Double(r.lowerBound) / sr, Double(r.upperBound) / sr)
+            if !text.contains(line) { text += line + "\n" }
+        }
+        Data(text.utf8).save(to: night.url(.gaps), "Lücken")
+        Log.analysis.notice("\(ranges.count) unlesbare Audiodatei(en) mit Stille gefüllt")
     }
 
     /// Bild-Bereiche (10 je Sekunde), in denen eigene Schlafklänge liefen – aus sounds.csv, für
@@ -202,16 +221,41 @@ private struct AudioStream {
     private let target = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Double(LogMel.sampleRate),
                                        channels: 1, interleaved: false)!
 
-    init(files: [URL]) { self.files = files }
+    /// Proben Stille je Datei, falls sie sich nicht öffnen lässt (0 = einfach überspringen)
+    let fill: [Int]
+    /// mit Stille gefüllte Bereiche (Proben ab Beginn)
+    private(set) var filled: [Range<Int>] = []
+    private var produced = 0
+    private var zeros = 0
+
+    init(files: [URL], fill: [Int]) {
+        self.files = files
+        self.fill = fill
+    }
 
     mutating func read(_ count: Int) throws -> [Float] {
         var out: [Float] = []
         out.reserveCapacity(count)
+        defer { produced += out.count }
         while out.count < count {
+            if zeros > 0 {
+                let n = min(zeros, count - out.count)
+                out.append(contentsOf: repeatElement(0, count: n))
+                zeros -= n
+                continue
+            }
             if file == nil {
                 guard index < files.count else { break }
-                // unlesbare Datei (z. B. beim Schreiben abgebrochen) überspringen statt die ganze Nacht aufzugeben
-                guard let f = try? AVAudioFile(forReading: files[index]) else { index += 1; continue }
+                // unlesbare Datei (z. B. beim Schreiben abgebrochen): Stille in ihrer Länge statt aufzugeben
+                guard let f = try? AVAudioFile(forReading: files[index]) else {
+                    let n = index < fill.count ? fill[index] : 0
+                    if n > 0 {
+                        filled.append((produced + out.count)..<(produced + out.count + n))
+                        zeros = n
+                    }
+                    index += 1
+                    continue
+                }
                 index += 1
                 file = f
                 converter = f.processingFormat.sampleRate == target.sampleRate && f.processingFormat.channelCount == 1

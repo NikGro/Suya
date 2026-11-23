@@ -1,6 +1,7 @@
 import AVFoundation
 import CoreML
 import Foundation
+import Synchronization
 import SonarDSP
 
 /// Schlafphasen aus dem gelernten Modell (Labor + eigene Nächte, siehe training/).
@@ -39,6 +40,31 @@ enum NightModel {
     static let maxAttempts = 3
     private static func attemptsURL(_ folder: URL) -> URL { Night(folder).url(.analysisAttempts) }
     /// gezählt je App-Version: nach einem Update (vielleicht mit Fehlerbehebung) neue Versuche
+    /// Nacht, die gerade gerechnet wird (für `forgiveRunningAttempt`)
+    private static let running = Mutex<URL?>(nil)
+
+    /// Die App geht in den Hintergrund oder die Hintergrundzeit läuft ab: Beendet iOS sie jetzt mitten in der
+    /// Auswertung, ist das kein Fehler der Nacht – diesen Versuch nicht zählen (nur Abstürze im Vordergrund).
+    static func forgiveRunningAttempt() {
+        guard let folder = running.withLock({ $0 }) else { return }
+        writeAttempts(max(0, attempts(folder) - 1), folder)
+    }
+
+    /// Wieder im Vordergrund, Auswertung läuft noch: den Versuch wieder zählen
+    static func countRunningAttemptAgain() {
+        guard let folder = running.withLock({ $0 }) else { return }
+        writeAttempts(min(maxAttempts, attempts(folder) + 1), folder)
+    }
+
+    /// „Erneut auswerten“: alle Versuche zurücksetzen
+    static func resetAttempts(_ folder: URL) {
+        try? FileManager.default.removeItem(at: attemptsURL(folder))
+    }
+
+    private static func writeAttempts(_ n: Int, _ folder: URL) {
+        Data("\(n) \(appBuild)".utf8).save(to: attemptsURL(folder), "Auswertungsversuche")
+    }
+
     static func attempts(_ folder: URL) -> Int {
         guard let text = try? String(contentsOf: attemptsURL(folder), encoding: .utf8) else { return 0 }
         let parts = text.split(separator: " ")
@@ -66,8 +92,13 @@ enum NightModel {
         let files = Night(folder).audioFiles
         guard !files.isEmpty else { throw Failure.noAudio }
         let tries = attempts(folder)
-        guard tries < maxAttempts else { throw Failure.gaveUp }
-        Data("\(tries + 1) \(appBuild)".utf8).save(to: attemptsURL(folder), "Auswertungsversuche")
+        guard tries < maxAttempts else {
+            Log.analysis.error("Auswertung aufgegeben nach \(tries) Versuchen")
+            throw Failure.gaveUp
+        }
+        writeAttempts(tries + 1, folder)
+        running.withLock { $0 = folder }
+        defer { running.withLock { $0 = nil } }
         guard let encURL = Bundle.main.url(forResource: "SuyaEpochEncoder", withExtension: "mlmodelc"),
               let seqURL = Bundle.main.url(forResource: "SuyaNightSequence", withExtension: "mlmodelc")
         else { throw Failure.noModel }

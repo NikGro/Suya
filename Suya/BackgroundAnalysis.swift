@@ -73,7 +73,10 @@ enum BackgroundAnalysis {
             }
             if !Task.isCancelled { await NightFinisher.run() }
         }
-        task.expirationHandler = { work.cancel() }
+        task.expirationHandler = {
+            NightModel.forgiveRunningAttempt()   // iOS beendet die Hintergrundarbeit: kein Fehler der Nacht
+            work.cancel()
+        }
         Task { @MainActor in
             _ = await work.result
             task.setTaskCompleted(success: pendingNights().isEmpty)

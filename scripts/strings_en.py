@@ -381,6 +381,7 @@ EN = {
 "Speicher fast voll – Aufnahme beendet": "Storage almost full – recording stopped",
 "Die Aufnahme hatte Aussetzer – wird nicht gespendet.": "The recording had gaps – not donated.",
 "Fehlermeldungen der App": "App error messages",
+"Erneut auswerten": "Analyze again",
 }
 # Schlüssel, die nicht über tr("…") im Code stehen (für die Vollständigkeitsprüfung)
 DYNAMIC = ["Aus", "Schlummern", "Klänge ausblenden", "Klänge abspielen", "Klänge sofort aus", "Wach", "REM", "Kern", "Tief", "Im Bett", "Schlafend", "Schnarchen", "Sprechen",

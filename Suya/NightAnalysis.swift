@@ -38,9 +38,13 @@ enum NightAnalyzer {
         } else if Night(folder).audioFiles.isEmpty, let c = NightModel.cachedAnyVersion(folder) {
             stages = c   // Ton schon gelöscht: das zuletzt gerechnete Ergebnis behalten
         } else {
-            guard NightModel.isAvailable, let s = try? await NightModel.stages(folder: folder, progress: progress)
-            else { throw Failure.noModel }
-            stages = s
+            guard NightModel.isAvailable else { throw Failure.noModel }
+            do {
+                stages = try await NightModel.stages(folder: folder, progress: progress)
+            } catch {
+                Log.analysis.error("Auswertung: \(String(describing: error), privacy: .public)")
+                throw Failure.noModel
+            }
         }
         guard !stages.isEmpty else { throw Failure.noModel }
         return (start, stages, 30)
@@ -105,6 +109,7 @@ struct NightAnalysisView: View {
     @State private var error: String?
     @State private var soundProgress: Double?
     @State private var modelProgress: Double?
+    @State private var attempt = 0
     @ObservedObject private var analysis = AnalysisProgress.shared
 
     /// ein Zeitraum für alle Zeitstrahlen der Nacht (Suya und Watch)
@@ -118,7 +123,18 @@ struct NightAnalysisView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 48) {
                 if let error {
-                    Text(error).foregroundStyle(Theme.alert)
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(error).foregroundStyle(Theme.alert)
+                        // Ton noch da: neu versuchen (setzt die Zahl der Versuche zurück)
+                        if Night(folder).hasAudio {
+                            Button(tr("Erneut auswerten")) {
+                                NightModel.resetAttempts(folder)
+                                self.error = nil
+                                attempt += 1
+                            }
+                            .buttonStyle(.borderedProminent).tint(Theme.moon)
+                        }
+                    }
                 } else if let r = result {
                     content(r)
                 } else {
@@ -149,7 +165,7 @@ struct NightAnalysisView: View {
         .nightBackground()
         .navigationTitle(result.map { Self.title($0.start) } ?? tr("Auswertung"))
         .navigationBarTitleDisplayMode(.inline)
-        .task {
+        .task(id: attempt) {
             BackgroundAnalysis.analysisStarted()
             defer { BackgroundAnalysis.analysisEnded() }
             do {

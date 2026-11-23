@@ -72,10 +72,12 @@ struct SuyaApp: App {
             .preferredColorScheme(.dark)
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background {
+                    NightModel.forgiveRunningAttempt()
                     BackgroundAnalysis.appWentToBackground()
                     SleepSoundPlayer.shared.appBackgrounded()
                 }
                 if phase == .active {
+                    NightModel.countRunningAttemptAgain()
                     SmartAlarm.shared.refresh()
                     Task {
                         await HealthSync.syncRecent()
